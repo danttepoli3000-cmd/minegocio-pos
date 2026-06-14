@@ -3,17 +3,11 @@ const rol = localStorage.getItem("rol");
 
 let productoSeleccionado = null;
 
-/* ================= AUTH ================= */
 function authHeaders(extra = {}) {
     return {
         "Authorization": "Bearer " + token,
         ...extra
     };
-}
-
-/* ================= PROTECT ================= */
-if (!token || rol !== "admin") {
-    window.location.replace("login.html");
 }
 
 /* ================= PRODUCTOS ================= */
@@ -23,8 +17,6 @@ async function cargarProductos() {
         headers: authHeaders()
     });
 
-    if (!res.ok) return;
-
     const productos = await res.json();
 
     let html = "";
@@ -32,14 +24,11 @@ async function cargarProductos() {
     productos.forEach(p => {
 
         html += `
-        <div class="producto">
-            <h3>${p.nombre}</h3>
-            Precio: $${p.precio}<br>
-            Stock: ${p.stock}<br><br>
-
+        <div>
+            <b>${p.nombre}</b> - $${p.precio} - Stock: ${p.stock}
             <button onclick='venderProducto(${JSON.stringify(p)})'>💰</button>
             <button onclick='eliminarProducto(${p.id})'>🗑</button>
-        </div><br>
+        </div>
         `;
     });
 
@@ -52,10 +41,6 @@ function venderProducto(p) {
     productoSeleccionado = p;
 
     document.getElementById("ventaProducto").innerText = p.nombre;
-    document.getElementById("ventaPrecio").innerText = "$" + p.precio;
-
-    document.getElementById("cantidadVenta").value = 1;
-    document.getElementById("clientePaga").value = "";
 
     actualizarTotal();
 }
@@ -65,7 +50,6 @@ function actualizarTotal() {
     if (!productoSeleccionado) return;
 
     const cantidad = Number(document.getElementById("cantidadVenta").value);
-
     const total = cantidad * productoSeleccionado.precio;
 
     document.getElementById("ventaTotal").innerText = "$" + total;
@@ -77,8 +61,8 @@ function calcularVuelto() {
 
     if (!productoSeleccionado) return;
 
-    const cantidad = Number(document.getElementById("cantidadVenta").value) || 0;
-    const paga = Number(document.getElementById("clientePaga").value) || 0;
+    const cantidad = Number(document.getElementById("cantidadVenta").value);
+    const paga = Number(document.getElementById("clientePaga").value);
 
     const total = cantidad * productoSeleccionado.precio;
 
@@ -87,8 +71,6 @@ function calcularVuelto() {
 
 /* ================= CONFIRMAR VENTA ================= */
 async function confirmarVenta() {
-
-    if (!productoSeleccionado) return alert("Selecciona producto");
 
     const cantidad = Number(document.getElementById("cantidadVenta").value);
     const paga = Number(document.getElementById("clientePaga").value);
@@ -113,8 +95,6 @@ async function confirmarVenta() {
         alert("Venta OK");
         cargarProductos();
         cargarHistorial();
-        cargarResumen();
-        productoSeleccionado = null;
     }
 }
 
@@ -130,33 +110,14 @@ async function cargarHistorial() {
     let html = "";
 
     data.forEach(d => {
-
-        html += `<div class="producto"><h3>${d.dia}</h3>`;
+        html += `<h3>${d.dia}</h3>`;
 
         d.ventas.forEach(v => {
-            html += `
-            👤 ${v.vendedor || "Sistema"}<br>
-            ${v.producto} x${v.cantidad} = $${v.total}<br><br>
-            `;
+            html += `${v.vendedor || "Sistema"} - ${v.producto} x${v.cantidad}<br>`;
         });
-
-        html += `</div><br>`;
     });
 
     document.getElementById("historial").innerHTML = html;
-}
-
-/* ================= RESUMEN ================= */
-async function cargarResumen() {
-
-    const res = await fetch("/resumen", {
-        headers: authHeaders()
-    });
-
-    const data = await res.json();
-
-    document.getElementById("totalVentas").innerText = data.ventas;
-    document.getElementById("dineroTotal").innerText = "$" + data.dinero;
 }
 
 /* ================= STOCK ================= */
@@ -169,13 +130,12 @@ async function eliminarProducto(id) {
     cargarProductos();
 }
 
-/* ================= INIT ================= */
-cargarProductos();
-cargarHistorial();
-cargarResumen();
-
 /* ================= LOGOUT ================= */
 function cerrarSesion() {
     localStorage.clear();
-    window.location.replace("login.html");
+    window.location = "login.html";
 }
+
+/* INIT */
+cargarProductos();
+cargarHistorial();

@@ -213,7 +213,29 @@ function imprimirTicket(producto, cantidad, total, paga, vuelto) {
 
     ventana.document.close();
 }
+(function () {
 
+    const token = localStorage.getItem("token");
+    const rol = localStorage.getItem("rol");
+
+    if (!token) {
+        window.location.replace("login.html");
+        return;
+    }
+
+    // ADMIN PAGE
+    if (window.location.pathname.includes("admin") && rol !== "admin") {
+        window.location.replace("login.html");
+        return;
+    }
+
+    // CAJERA PAGE
+    if (window.location.pathname.includes("cajera") && rol !== "cajera") {
+        window.location.replace("login.html");
+        return;
+    }
+
+})();
 /* =========================
    INICIO
 ========================= */
