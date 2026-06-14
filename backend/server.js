@@ -15,13 +15,24 @@ console.log("initDB cargado");
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../public")));
-// 👉 Cuando entran a la raíz del link
+
+// SI ENTRAN A /
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "../public/login.html"));
+    res.redirect("/login.html");
 });
-/* =========================
-   MIDDLEWARE TOKEN
-========================= */
+
+// PROTEGER admin.html
+app.get("/admin.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "../public/admin.html"));
+});
+
+// PROTEGER cajera.html
+app.get("/cajera.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "../public/cajera.html"));
+});
+
+
+
 function verificarToken(req, res, next) {
 
     const header = req.headers.authorization;
