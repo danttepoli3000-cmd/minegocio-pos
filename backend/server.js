@@ -160,8 +160,8 @@ app.post("/ventas", verificarToken, async (req, res) => {
         [cantidad, id]
     );
 
-    await db.query(
-    "INSERT INTO ventas(producto,cantidad,total,fecha,vendedor) VALUES($1,$2,$3,now(),$4)",
+   await db.query(
+    "INSERT INTO ventas(producto,cantidad,total,fecha,vendedor) VALUES($1,$2,$3,NOW(),$4)",
     [
         producto.nombre,
         cantidad,
