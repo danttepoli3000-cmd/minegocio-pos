@@ -1,64 +1,11 @@
 const token = localStorage.getItem("token");
 const rol = localStorage.getItem("rol");
+
 let productoSeleccionado = null;
 
-function venderProducto(producto) {
-
-    productoSeleccionado = producto;
-
-    document.getElementById("ventaProducto").innerText = producto.nombre;
-
-    document.getElementById("ventaPrecio").innerText =
-        "$" + Number(producto.precio).toLocaleString("es-CL");
-
-    document.getElementById("cantidadVenta").value = 1;
-    document.getElementById("clientePaga").value = "";
-    document.getElementById("ventaTotal").innerText =
-        "$" + Number(producto.precio).toLocaleString("es-CL");
-    document.getElementById("vuelto").innerText = "$0";
-
-    actualizarTotal();
-}
-
-function actualizarTotal() {
-
-    if (!productoSeleccionado) return;
-
-    const cantidad =
-        Number(document.getElementById("cantidadVenta").value) || 1;
-
-    const total =
-        cantidad * Number(productoSeleccionado.precio);
-
-    document.getElementById("ventaTotal").innerText =
-        "$" + total.toLocaleString("es-CL");
-
-    calcularVuelto();
-}
-
-function calcularVuelto() {
-
-    if (!productoSeleccionado) return;
-
-    const cantidad =
-        Number(document.getElementById("cantidadVenta").value) || 0;
-
-    const texto =
-        document.getElementById("clientePaga").value;
-
-    if (texto === "") {
-        document.getElementById("vuelto").innerText = "$0";
-        return;
-    }
-
-    const paga = Number(texto);
-    const total = cantidad * Number(productoSeleccionado.precio);
-    const vuelto = paga - total;
-
-    document.getElementById("vuelto").innerText =
-        "$" + vuelto.toLocaleString("es-CL");
-}
-
+/* =========================
+   AUTH
+========================= */
 function authHeaders(extra = {}) {
     return {
         "Authorization": "Bearer " + token,
@@ -66,14 +13,23 @@ function authHeaders(extra = {}) {
     };
 }
 
-/* =======================
+/* =========================
+   PROTEGER
+========================= */
+if (!token || rol !== "admin") {
+    window.location.href = "login.html";
+}
+
+/* =========================
    PRODUCTOS
-======================= */
+========================= */
 async function cargarProductos() {
 
     const res = await fetch("/productos", {
         headers: authHeaders()
     });
+
+    if (!res.ok) return;
 
     const productos = await res.json();
 
@@ -85,91 +41,110 @@ async function cargarProductos() {
         .filter(p => p.nombre.toLowerCase().includes(texto))
         .forEach(p => {
 
-           html += `
-<div class="producto">
+            html += `
+            <div class="producto">
+                <h3>${p.nombre}</h3>
+                Precio: $${Number(p.precio).toLocaleString("es-CL")}<br>
+                Stock: ${p.stock}<br><br>
 
-    <h3>${p.nombre}</h3>
-
-    Precio: $${Number(p.precio).toLocaleString("es-CL")}<br>
-
-   
-    ${
-    p.stock == 0
-        ? "<span style='color:red;font-weight:bold;'>🔴 SIN STOCK</span><br><br>"
-        : p.stock <= 2
-        ? "<span style='color:orange;font-weight:bold;'>⚠️ Stock bajo: " + p.stock + "</span><br><br>"
-        : "Stock: " + p.stock + "<br><br>"
-}
-
-    <button onclick='venderProducto(${JSON.stringify(p)})'>
-        💰 Vender
-    </button>
-
-    <button onclick='editarProducto(${p.id}, "${p.nombre}", ${p.precio}, ${p.stock})'>
-        ✏️
-    </button>
-
-    <button onclick='agregarStock(${p.id})'>
-        ➕
-    </button>
-
-    <button onclick='eliminarProducto(${p.id})'>
-        🗑
-    </button>
-
-</div><br>
-`;
+                <button onclick='venderProducto(${JSON.stringify(p)})'>💰</button>
+                <button onclick='editarProducto(${p.id}, "${p.nombre}", ${p.precio}, ${p.stock})'>✏️</button>
+                <button onclick='agregarStock(${p.id})'>➕</button>
+                <button onclick='eliminarProducto(${p.id})'>🗑</button>
+            </div><br>
+            `;
         });
 
     document.getElementById("lista").innerHTML = html;
 }
 
-/* AGREGAR */
-async function agregarProducto() {
+/* =========================
+   VENTA
+========================= */
+function venderProducto(p) {
 
-    await fetch("/productos", {
+    productoSeleccionado = p;
+
+    document.getElementById("ventaProducto").innerText = p.nombre;
+    document.getElementById("ventaPrecio").innerText = "$" + p.precio;
+
+    document.getElementById("cantidadVenta").value = 1;
+    document.getElementById("clientePaga").value = "";
+
+    actualizarTotal();
+}
+
+function actualizarTotal() {
+
+    if (!productoSeleccionado) return;
+
+    const cantidad = Number(document.getElementById("cantidadVenta").value);
+    const total = cantidad * productoSeleccionado.precio;
+
+    document.getElementById("ventaTotal").innerText = "$" + total;
+
+    calcularVuelto();
+}
+
+function calcularVuelto() {
+
+    if (!productoSeleccionado) return;
+
+    const cantidad = Number(document.getElementById("cantidadVenta").value) || 0;
+    const paga = Number(document.getElementById("clientePaga").value) || 0;
+
+    const total = cantidad * productoSeleccionado.precio;
+    const vuelto = paga - total;
+
+    document.getElementById("vuelto").innerText = "$" + vuelto;
+}
+
+/* =========================
+   CONFIRMAR VENTA
+========================= */
+async function confirmarVenta() {
+
+    if (!productoSeleccionado) return alert("Selecciona producto");
+
+    const cantidad = Number(document.getElementById("cantidadVenta").value);
+    const paga = Number(document.getElementById("clientePaga").value);
+
+    const total = cantidad * productoSeleccionado.precio;
+
+    if (paga < total) return alert("No paga suficiente");
+
+    const res = await fetch("/ventas", {
         method: "POST",
         headers: authHeaders({
             "Content-Type": "application/json"
         }),
         body: JSON.stringify({
-            nombre: nombre.value,
-            precio: Number(precio.value),
-            stock: Number(stock.value)
+            id: productoSeleccionado.id,
+            cantidad,
+            total
         })
     });
 
-    cargarProductos();
+    const data = await res.json();
+
+    if (data.ok) {
+
+        alert("Venta OK");
+
+        cargarProductos();
+        cargarHistorial();
+        cargarResumen();
+
+        productoSeleccionado = null;
+
+    } else {
+        alert(data.mensaje || "Error venta");
+    }
 }
 
-/* ELIMINAR */
-async function eliminarProducto(id) {
-
-    await fetch("/productos/" + id, {
-        method: "DELETE",
-        headers: authHeaders()
-    });
-
-    cargarProductos();
-}
-
-/* STOCK */
-async function agregarStock(id) {
-
-    const cantidad = Number(prompt("Cantidad"));
-
-    await fetch("/stock/" + id, {
-        method: "PUT",
-        headers: authHeaders({
-            "Content-Type": "application/json"
-        }),
-        body: JSON.stringify({ cantidad })
-    });
-
-    cargarProductos();
-}
-
-/* HISTORIAL */
+/* =========================
+   HISTORIAL
+========================= */
 async function cargarHistorial() {
 
     const res = await fetch("/ventas", {
@@ -182,46 +157,31 @@ async function cargarHistorial() {
 
     data.forEach(d => {
 
-        const fecha = new Date(d.dia);
-
-        const dia =
-            fecha.getDate().toString().padStart(2, "0") + "/" +
-            (fecha.getMonth() + 1).toString().padStart(2, "0") + "/" +
-            fecha.getFullYear();
-
-        html += `
-        <div class="producto">
-
-        <h3>📅 ${dia}</h3>
-        `;
-
         let totalDia = 0;
+
+        html += `<div class="producto"><h3>${d.dia}</h3>`;
 
         d.ventas.forEach(v => {
 
             totalDia += Number(v.total);
-html += `
-🕒 ${v.hora}<br>
-👤 ${v.vendedor || "Sin registro"}<br>
-${v.producto} x${v.cantidad} = $${Number(v.total).toLocaleString("es-CL")}
-<br><br>
-`;
 
+            html += `
+            🕒 ${v.hora}<br>
+            👤 ${v.vendedor || "Sistema"}<br>
+            ${v.producto} x${v.cantidad} = $${v.total}
+            <br><br>
+            `;
         });
 
-        html += `
-        <hr>
-        <b>Total del día:
-        $${totalDia.toLocaleString("es-CL")}</b>
-
-        </div><br>
-        `;
+        html += `<b>Total día: $${totalDia}</b></div><br>`;
     });
 
     document.getElementById("historial").innerHTML = html;
 }
 
-/* RESUMEN + ESTADISTICAS */
+/* =========================
+   RESUMEN
+========================= */
 async function cargarResumen() {
 
     const res = await fetch("/resumen", {
@@ -231,304 +191,52 @@ async function cargarResumen() {
     const data = await res.json();
 
     document.getElementById("totalVentas").innerText = data.ventas;
-
-    document.getElementById("totalVentasDashboard").innerText = data.ventas;
-
-    document.getElementById("dineroTotal").innerText =
-        "$" + Number(data.dinero).toLocaleString("es-CL");
-}
-async function cargarEstadisticas() {
-
-    const res = await fetch("/estadisticas", { headers: authHeaders() });
-    const data = await res.json();
-
-    ventasHoy.innerText = "$" + data.hoy.toLocaleString("es-CL");
-    ventasMes.innerText = "$" + data.mes.toLocaleString("es-CL");
-}
-document.getElementById("cantidadVenta")
-.addEventListener("input", actualizarTotal);
-
-document.getElementById("clientePaga")
-.addEventListener("input", calcularVuelto);
-/* INIT */
-cargarProductos();
-cargarHistorial();
-cargarResumen();
-cargarEstadisticas();
-
-async function confirmarVenta() {
-
-   if (productoSeleccionado.stock <= 0) {
-    alert("❌ Este producto no tiene stock.");
-    return;
+    document.getElementById("dineroTotal").innerText = "$" + data.dinero;
 }
 
-    const cantidad = Number(document.getElementById("cantidadVenta").value);
-    const paga = Number(document.getElementById("clientePaga").value);
-
-    const total = cantidad * productoSeleccionado.precio;
-
-    if (cantidad <= 0) {
-        alert("Cantidad inválida");
-        return;
-    }
-
-    if (paga < total) {
-        alert("El cliente no paga suficiente");
-        return;
-    }
-
-    const res = await fetch("/ventas", {
-
-        method: "POST",
-
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + token
-        },
-
-        body: JSON.stringify({
-            id: productoSeleccionado.id,
-            cantidad,
-            total
-        })
-
-    });
-
-    const data = await res.json();
-
-    if (data.ok) {
-
-        alert("✅ Venta realizada");
-
-        productoSeleccionado = null;
-
-        document.getElementById("ventaProducto").innerText = "Ninguno";
-        document.getElementById("ventaPrecio").innerText = "$0";
-        document.getElementById("ventaTotal").innerText = "$0";
-        document.getElementById("clientePaga").value = "";
-        document.getElementById("cantidadVenta").value = 1;
-        document.getElementById("vuelto").innerText = "$0";
-
-        cargarProductos();
-        cargarHistorial();
-        cargarResumen();
-        cargarEstadisticas();
-
-    } else {
-
-        alert(data.mensaje || "Error al vender");
-
-    }
+/* =========================
+   STOCK / CRUD
+========================= */
+async function eliminarProducto(id) {
+    await fetch("/productos/" + id, { method: "DELETE", headers: authHeaders() });
+    cargarProductos();
 }
-async function editarProducto(id, nombreActual, precioActual, stockActual) {
 
-    const nombre = prompt("Nombre del producto:", nombreActual);
-    if (nombre === null) return;
-
-    const precio = Number(prompt("Precio:", precioActual));
-    if (isNaN(precio)) return;
-
-    const stock = Number(prompt("Stock:", stockActual));
-    if (isNaN(stock)) return;
-
-    const res = await fetch("/productos/" + id, {
+async function agregarStock(id) {
+    const cantidad = Number(prompt("Cantidad"));
+    await fetch("/stock/" + id, {
         method: "PUT",
-        headers: authHeaders({
-            "Content-Type": "application/json"
-        }),
-        body: JSON.stringify({
-            nombre,
-            precio,
-            stock
-        })
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ cantidad })
     });
 
-    const data = await res.json();
-
-    if (data.ok) {
-        alert("✅ Producto actualizado");
-        cargarProductos();
-    } else {
-        alert("Error al actualizar");
-    }
+    cargarProductos();
 }
 
-function imprimirHistorial() {
-
-    const contenido =
-        document.getElementById("historial").innerHTML;
-
-    const ventana = window.open("", "_blank");
-
-    ventana.document.write(`
-        <html>
-
-        <head>
-
-        <title>Historial de Ventas</title>
-
-        <style>
-
-        body{
-            font-family:Arial;
-            padding:20px;
-        }
-
-        h1{
-            text-align:center;
-        }
-
-        </style>
-
-        </head>
-
-        <body>
-
-        <h1>📋 Historial de Ventas</h1>
-
-        ${contenido}
-
-        </body>
-
-        </html>
-    `);
-
-    ventana.document.close();
-
-    ventana.print();
-}
-
-
-
-
-
-async function exportarPDF() {
+/* =========================
+   PDF
+========================= */
+function exportarPDF() {
+    const contenido = document.getElementById("historial").innerText;
 
     const { jsPDF } = window.jspdf;
-
     const doc = new jsPDF();
 
-    doc.setFontSize(18);
-    doc.text("MI TIENDITA POS", 20, 20);
+    doc.text("CIERRE DE CAJA", 10, 10);
+    doc.text(contenido, 10, 20);
 
-    doc.setFontSize(12);
-    doc.text("Historial de Ventas", 20, 30);
-
-    let y = 45;
-
-    const historial =
-        document.getElementById("historial").innerText.split("\n");
-
-    historial.forEach(linea => {
-
-        if (linea.trim() !== "") {
-
-            doc.text(linea, 20, y);
-
-            y += 8;
-
-        }
-
-    });
-
-    doc.save("Historial_Ventas.pdf");
-
+    doc.save("cierre.pdf");
 }
 
+/* =========================
+   LOGOUT
+========================= */
 function cerrarSesion() {
     localStorage.clear();
     window.location = "login.html";
 }
 
-async function exportarPDF() {
-
-    const { jsPDF } = window.jspdf;
-
-    const doc = new jsPDF();
-
-    doc.setFontSize(18);
-    doc.text("MI TIENDITA POS", 20, 20);
-
-    doc.setFontSize(12);
-
-    const fecha = new Date().toLocaleDateString("es-CL");
-
-    doc.text("Historial de Ventas", 20, 30);
-    doc.text("Fecha: " + fecha, 20, 38);
-
-    let y = 50;
-
-    const historial =
-        document.getElementById("historial").innerText.split("\n");
-
-    historial.forEach(linea => {
-
-        if (linea.trim() != "") {
-
-            doc.text(linea, 20, y);
-
-            y += 8;
-
-            if (y > 280) {
-                doc.addPage();
-                y = 20;
-            }
-
-        }
-
-    });
-
-    doc.save("Historial_" + fecha.replace(/\//g, "-") + ".pdf");
-
-}
-
-function exportarPDF() {
-
-    const contenido = document.getElementById("historial").innerHTML;
-
-    const ventana = window.open("", "_blank");
-
-    ventana.document.write(`
-    <html>
-
-    <head>
-    <title>Cierre de Caja</title>
-
-    <style>
-
-    body{
-        font-family:Arial;
-        margin:30px;
-    }
-
-    h1{
-        text-align:center;
-    }
-
-    </style>
-
-    </head>
-
-    <body>
-
-    <h1>🛒 MI TIENDITA POS</h1>
-
-    <h2>Cierre de Caja</h2>
-
-    ${contenido}
-
-    <script>
-    window.onload=function(){
-        window.print();
-    }
-    <\/script>
-
-    </body>
-
-    </html>
-    `);
-
-    ventana.document.close();
-
-}
+/* INIT */
+cargarProductos();
+cargarHistorial();
+cargarResumen();
