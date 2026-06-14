@@ -1,8 +1,4 @@
-localStorage.setItem("token", data.token);
-     localStorage.setItem("rol", data.rol);
-
 async function login() {
-    
 
     const usuario = document.getElementById("usuario").value;
     const password = document.getElementById("password").value;
@@ -19,17 +15,12 @@ async function login() {
         alert("Usuario o contraseña incorrectos");
         return;
     }
-if (data.ok) {
+
+    // guardar sesión
     localStorage.setItem("token", data.token);
     localStorage.setItem("rol", data.rol);
 
-    window.location = data.rol === "admin"
-        ? "index.html"
-        : "cajera.html";
-}
-    // 🔥 ESTO ES LO IMPORTANTE
-    localStorage.setItem("rol", data.rol);
-
+    // redirección correcta
     if (data.rol === "admin") {
         window.location = "index.html";
     } else {
