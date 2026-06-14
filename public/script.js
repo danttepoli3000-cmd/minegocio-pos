@@ -75,18 +75,33 @@ async function cargarProductos() {
         .filter(p => p.nombre.toLowerCase().includes(texto))
         .forEach(p => {
 
-            html += `
-            <div class="producto">
-                <h3>${p.nombre}</h3>
-                Precio: $${Number(p.precio).toLocaleString("es-CL")}<br>
-                Stock: ${p.stock}<br><br>
+           html += `
+<div class="producto">
 
-                <button onclick='editarProducto(${p.id}, "${p.nombre}", ${p.precio}, ${p.stock})'>✏️</button>
-                <button onclick='agregarStock(${p.id})'>➕</button>
-                <button onclick='eliminarProducto(${p.id})'>🗑</button>
-                <button onclick='venderProducto(${JSON.stringify(p)})'>💰 Vender</button>
-            </div><br>
-            `;
+    <h3>${p.nombre}</h3>
+
+    Precio: $${Number(p.precio).toLocaleString("es-CL")}<br>
+
+    Stock: ${p.stock}<br><br>
+
+    <button onclick='venderProducto(${JSON.stringify(p)})'>
+        💰 Vender
+    </button>
+
+    <button onclick='editarProducto(${p.id}, "${p.nombre}", ${p.precio}, ${p.stock})'>
+        ✏️
+    </button>
+
+    <button onclick='agregarStock(${p.id})'>
+        ➕
+    </button>
+
+    <button onclick='eliminarProducto(${p.id})'>
+        🗑
+    </button>
+
+</div><br>
+`;
         });
 
     document.getElementById("lista").innerHTML = html;
