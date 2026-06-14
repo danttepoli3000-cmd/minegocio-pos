@@ -6,17 +6,21 @@
 <link rel="stylesheet" href="style.css">
 
 <script>
-const token = localStorage.getItem("token");
-const rol = localStorage.getItem("rol");
+(function () {
+    const token = localStorage.getItem("token");
+    const rol = localStorage.getItem("rol");
 
-if (!token) {
-    window.location.href = "login.html";
-}
+    if (!token) {
+        window.location.replace("login.html");
+        return;
+    }
 
-if (rol !== "admin") {
-    alert("No autorizado");
-    window.location.href = "login.html";
-}
+    if (rol !== "admin") {
+        alert("No autorizado");
+        window.location.replace("login.html");
+        return;
+    }
+})();
 </script>
 
 </head>
@@ -30,16 +34,12 @@ if (rol !== "admin") {
         <button class="logout" onclick="cerrarSesion()">Salir</button>
     </div>
 
-    <!-- PRODUCTOS -->
     <div class="card">
         <h2>📦 Inventario</h2>
-
         <input id="buscar" type="text" placeholder="Buscar..." oninput="cargarProductos()">
-
         <div id="lista"></div>
     </div>
 
-    <!-- VENTA -->
     <div class="card">
         <h2>🧾 Venta</h2>
 
@@ -55,17 +55,14 @@ if (rol !== "admin") {
         <button onclick="confirmarVenta()">✅ Vender</button>
     </div>
 
-    <!-- RESUMEN -->
     <div class="card">
         <h2>💰 Resumen</h2>
         <p>Ventas: <span id="totalVentas">0</span></p>
         <p>Total dinero: <b id="dineroTotal">$0</b></p>
     </div>
 
-    <!-- HISTORIAL -->
     <div class="card">
         <h2>📋 Historial</h2>
-
         <div id="historial">Sin ventas</div>
 
         <button onclick="exportarPDF()">📄 PDF</button>

@@ -3,9 +3,7 @@ const rol = localStorage.getItem("rol");
 
 let productoSeleccionado = null;
 
-/* =========================
-   AUTH
-========================= */
+/* ================= AUTH ================= */
 function authHeaders(extra = {}) {
     return {
         "Authorization": "Bearer " + token,
@@ -13,16 +11,12 @@ function authHeaders(extra = {}) {
     };
 }
 
-/* =========================
-   PROTEGER
-========================= */
+/* ================= PROTECT ================= */
 if (!token || rol !== "admin") {
-    window.location.href = "login.html";
+    window.location.replace("login.html");
 }
 
-/* =========================
-   PRODUCTOS
-========================= */
+/* ================= PRODUCTOS ================= */
 async function cargarProductos() {
 
     const res = await fetch("/productos", {
@@ -33,34 +27,26 @@ async function cargarProductos() {
 
     const productos = await res.json();
 
-    const texto = document.getElementById("buscar")?.value.toLowerCase() || "";
-
     let html = "";
 
-    productos
-        .filter(p => p.nombre.toLowerCase().includes(texto))
-        .forEach(p => {
+    productos.forEach(p => {
 
-            html += `
-            <div class="producto">
-                <h3>${p.nombre}</h3>
-                Precio: $${Number(p.precio).toLocaleString("es-CL")}<br>
-                Stock: ${p.stock}<br><br>
+        html += `
+        <div class="producto">
+            <h3>${p.nombre}</h3>
+            Precio: $${p.precio}<br>
+            Stock: ${p.stock}<br><br>
 
-                <button onclick='venderProducto(${JSON.stringify(p)})'>💰</button>
-                <button onclick='editarProducto(${p.id}, "${p.nombre}", ${p.precio}, ${p.stock})'>✏️</button>
-                <button onclick='agregarStock(${p.id})'>➕</button>
-                <button onclick='eliminarProducto(${p.id})'>🗑</button>
-            </div><br>
-            `;
-        });
+            <button onclick='venderProducto(${JSON.stringify(p)})'>💰</button>
+            <button onclick='eliminarProducto(${p.id})'>🗑</button>
+        </div><br>
+        `;
+    });
 
     document.getElementById("lista").innerHTML = html;
 }
 
-/* =========================
-   VENTA
-========================= */
+/* ================= VENTA ================= */
 function venderProducto(p) {
 
     productoSeleccionado = p;
@@ -79,6 +65,7 @@ function actualizarTotal() {
     if (!productoSeleccionado) return;
 
     const cantidad = Number(document.getElementById("cantidadVenta").value);
+
     const total = cantidad * productoSeleccionado.precio;
 
     document.getElementById("ventaTotal").innerText = "$" + total;
@@ -94,14 +81,11 @@ function calcularVuelto() {
     const paga = Number(document.getElementById("clientePaga").value) || 0;
 
     const total = cantidad * productoSeleccionado.precio;
-    const vuelto = paga - total;
 
-    document.getElementById("vuelto").innerText = "$" + vuelto;
+    document.getElementById("vuelto").innerText = "$" + (paga - total);
 }
 
-/* =========================
-   CONFIRMAR VENTA
-========================= */
+/* ================= CONFIRMAR VENTA ================= */
 async function confirmarVenta() {
 
     if (!productoSeleccionado) return alert("Selecciona producto");
@@ -110,8 +94,6 @@ async function confirmarVenta() {
     const paga = Number(document.getElementById("clientePaga").value);
 
     const total = cantidad * productoSeleccionado.precio;
-
-    if (paga < total) return alert("No paga suficiente");
 
     const res = await fetch("/ventas", {
         method: "POST",
@@ -128,23 +110,15 @@ async function confirmarVenta() {
     const data = await res.json();
 
     if (data.ok) {
-
         alert("Venta OK");
-
         cargarProductos();
         cargarHistorial();
         cargarResumen();
-
         productoSeleccionado = null;
-
-    } else {
-        alert(data.mensaje || "Error venta");
     }
 }
 
-/* =========================
-   HISTORIAL
-========================= */
+/* ================= HISTORIAL ================= */
 async function cargarHistorial() {
 
     const res = await fetch("/ventas", {
@@ -157,31 +131,22 @@ async function cargarHistorial() {
 
     data.forEach(d => {
 
-        let totalDia = 0;
-
         html += `<div class="producto"><h3>${d.dia}</h3>`;
 
         d.ventas.forEach(v => {
-
-            totalDia += Number(v.total);
-
             html += `
-            🕒 ${v.hora}<br>
             👤 ${v.vendedor || "Sistema"}<br>
-            ${v.producto} x${v.cantidad} = $${v.total}
-            <br><br>
+            ${v.producto} x${v.cantidad} = $${v.total}<br><br>
             `;
         });
 
-        html += `<b>Total día: $${totalDia}</b></div><br>`;
+        html += `</div><br>`;
     });
 
     document.getElementById("historial").innerHTML = html;
 }
 
-/* =========================
-   RESUMEN
-========================= */
+/* ================= RESUMEN ================= */
 async function cargarResumen() {
 
     const res = await fetch("/resumen", {
@@ -194,49 +159,23 @@ async function cargarResumen() {
     document.getElementById("dineroTotal").innerText = "$" + data.dinero;
 }
 
-/* =========================
-   STOCK / CRUD
-========================= */
+/* ================= STOCK ================= */
 async function eliminarProducto(id) {
-    await fetch("/productos/" + id, { method: "DELETE", headers: authHeaders() });
-    cargarProductos();
-}
-
-async function agregarStock(id) {
-    const cantidad = Number(prompt("Cantidad"));
-    await fetch("/stock/" + id, {
-        method: "PUT",
-        headers: authHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({ cantidad })
+    await fetch("/productos/" + id, {
+        method: "DELETE",
+        headers: authHeaders()
     });
 
     cargarProductos();
 }
 
-/* =========================
-   PDF
-========================= */
-function exportarPDF() {
-    const contenido = document.getElementById("historial").innerText;
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    doc.text("CIERRE DE CAJA", 10, 10);
-    doc.text(contenido, 10, 20);
-
-    doc.save("cierre.pdf");
-}
-
-/* =========================
-   LOGOUT
-========================= */
-function cerrarSesion() {
-    localStorage.clear();
-    window.location = "login.html";
-}
-
-/* INIT */
+/* ================= INIT ================= */
 cargarProductos();
 cargarHistorial();
 cargarResumen();
+
+/* ================= LOGOUT ================= */
+function cerrarSesion() {
+    localStorage.clear();
+    window.location.replace("login.html");
+}
