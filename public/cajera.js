@@ -14,17 +14,10 @@ let productoSeleccionado = null;
 async function cargarProductos() {
 
     const res = await fetch("/productos", {
-        headers: {
-            "Authorization": "Bearer " + token
-        }
+        headers: authHeaders()
     });
 
     const productos = await res.json();
-
-    if (!Array.isArray(productos)) {
-        console.log("ERROR productos:", productos);
-        return;
-    }
 
     const texto = document.getElementById("buscar")?.value.toLowerCase() || "";
 
@@ -34,20 +27,40 @@ async function cargarProductos() {
         .filter(p => p.nombre.toLowerCase().includes(texto))
         .forEach(p => {
 
-            html += `
-            <div class="producto">
+           html += `
+<div class="producto">
 
-                <b>${p.nombre}</b><br>
-                Precio: $${Number(p.precio).toLocaleString("es-CL")}<br>
-                Stock: ${p.stock}<br><br>
+    <h3>${p.nombre}</h3>
 
-                <button onclick='venderProducto(${JSON.stringify(p)})'>
-                    💰 Vender
-                </button>
+    Precio: $${Number(p.precio).toLocaleString("es-CL")}<br>
 
-            </div>
-            <br>
-            `;
+   
+    ${
+    p.stock == 0
+        ? "<span style='color:red;font-weight:bold;'>🔴 SIN STOCK</span><br><br>"
+        : p.stock <= 2
+        ? "<span style='color:orange;font-weight:bold;'>⚠️ Stock bajo: " + p.stock + "</span><br><br>"
+        : "Stock: " + p.stock + "<br><br>"
+}
+
+    <button onclick='venderProducto(${JSON.stringify(p)})'>
+        💰 Vender
+    </button>
+
+    <button onclick='editarProducto(${p.id}, "${p.nombre}", ${p.precio}, ${p.stock})'>
+        ✏️
+    </button>
+
+    <button onclick='agregarStock(${p.id})'>
+        ➕
+    </button>
+
+    <button onclick='eliminarProducto(${p.id})'>
+        🗑
+    </button>
+
+</div><br>
+`;
         });
 
     document.getElementById("lista").innerHTML = html;
