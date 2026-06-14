@@ -200,15 +200,10 @@ async function cargarHistorial() {
         d.ventas.forEach(v => {
 
             totalDia += Number(v.total);
-
-            html += `
-👤 ${v.vendedor}<br>
-
-${v.producto}
-x${v.cantidad}
-=
-$${Number(v.total).toLocaleString("es-CL")}
-
+html += `
+🕒 ${v.hora}<br>
+👤 ${v.vendedor || "Sin registro"}<br>
+${v.producto} x${v.cantidad} = $${Number(v.total).toLocaleString("es-CL")}
 <br><br>
 `;
 
@@ -485,5 +480,55 @@ async function exportarPDF() {
     });
 
     doc.save("Historial_" + fecha.replace(/\//g, "-") + ".pdf");
+
+}
+
+function exportarPDF() {
+
+    const contenido = document.getElementById("historial").innerHTML;
+
+    const ventana = window.open("", "_blank");
+
+    ventana.document.write(`
+    <html>
+
+    <head>
+    <title>Cierre de Caja</title>
+
+    <style>
+
+    body{
+        font-family:Arial;
+        margin:30px;
+    }
+
+    h1{
+        text-align:center;
+    }
+
+    </style>
+
+    </head>
+
+    <body>
+
+    <h1>🛒 MI TIENDITA POS</h1>
+
+    <h2>Cierre de Caja</h2>
+
+    ${contenido}
+
+    <script>
+    window.onload=function(){
+        window.print();
+    }
+    <\/script>
+
+    </body>
+
+    </html>
+    `);
+
+    ventana.document.close();
 
 }

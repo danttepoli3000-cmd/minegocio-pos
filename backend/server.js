@@ -185,9 +185,10 @@ producto,
 cantidad,
 total,
 vendedor,
+TO_CHAR(fecha,'HH24:MI') as hora,
 DATE(fecha) as dia
 FROM ventas
-        ORDER BY fecha DESC
+ORDER BY fecha DESC
     `);
 
     const rows = result.rows;
