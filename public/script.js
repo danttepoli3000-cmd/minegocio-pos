@@ -281,7 +281,38 @@ async function confirmarVenta() {
 
     }
 }
+async function editarProducto(id, nombreActual, precioActual, stockActual) {
 
+    const nombre = prompt("Nombre del producto:", nombreActual);
+    if (nombre === null) return;
+
+    const precio = Number(prompt("Precio:", precioActual));
+    if (isNaN(precio)) return;
+
+    const stock = Number(prompt("Stock:", stockActual));
+    if (isNaN(stock)) return;
+
+    const res = await fetch("/productos/" + id, {
+        method: "PUT",
+        headers: authHeaders({
+            "Content-Type": "application/json"
+        }),
+        body: JSON.stringify({
+            nombre,
+            precio,
+            stock
+        })
+    });
+
+    const data = await res.json();
+
+    if (data.ok) {
+        alert("✅ Producto actualizado");
+        cargarProductos();
+    } else {
+        alert("Error al actualizar");
+    }
+}
 function cerrarSesion() {
     localStorage.clear();
     window.location = "login.html";
