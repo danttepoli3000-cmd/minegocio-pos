@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mi Negocio POS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+
+<<div class="topbar">
+    <h1>🛒 Mi Tiendita POS</h1>
+    <button class="logout" onclick="cerrarSesion()">Salir</button>
+</div>
+
+
+<div class="card">
+<h2>Agregar Producto</h2>
+
+<input id="nombre" placeholder="Nombre del producto">
+<input id="precio" type="number" placeholder="Precio">
+<input id="stock" type="number" placeholder="Stock">
+
+<button class="agregar" onclick="agregarProducto()">
+➕ Agregar Producto
+</button>
+</div>
+
+<div class="card">
+<h2>📦 Inventario</h2>
+
+<input id="buscar" type="text"
+placeholder="🔍 Buscar producto..."
+oninput="cargarProductos()">
+
+<div id="lista"></div>
+</div>
+
+<div class="card">
+<h2>🧾 Venta Actual</h2>
+
+<p><b>Producto:</b></p>
+<p id="ventaProducto">Ninguno</p>
+
+<p><b>Precio:</b></p>
+<p id="ventaPrecio">$0</p>
+
+<p><b>Cantidad:</b></p>
+<input id="cantidadVenta" type="number" value="1">
+
+<p><b>Total:</b></p>
+<p id="ventaTotal">$0</p>
+
+<p><b>Cliente paga:</b></p>
+<input id="clientePaga" type="number">
+
+<p><b>Vuelto:</b></p>
+<p id="vuelto">$0</p>
+
+<button class="vender" onclick="confirmarVenta()">
+✅ Confirmar Venta
+</button>
+</div>
+
+<div class="card">
+<button onclick="cerrarSesion()">🚪 Cerrar sesión</button>
+
+<h2>💰 Resumen</h2>
+
+<p>Ventas realizadas: <span id="totalVentas">0</span></p>
+<p>Dinero vendido: <b id="dineroTotal">$0</b></p>
+</div>
+
+<div class="card">
+    <h2>📊 Dashboard</h2>
+
+    <div class="stats">
+
+        <div class="stat-card">
+            <h3>Ventas Hoy</h3>
+            <p id="ventasHoy">$0</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Ventas Mes</h3>
+            <p id="ventasMes">$0</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Total Ventas</h3>
+            <p id="totalVentas">0</p>
+        </div>
+
+    </div>
+</div>
+<div class="card">
+<h2>📋 Historial de Ventas</h2>
+<div id="historial">Sin ventas</div>
+</div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>

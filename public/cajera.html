@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Cajera - Mi Negocio POS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+<<div class="topbar">
+    <h1>🛒 Mi Tiendita </h1>
+    <button class="logout" onclick="cerrarSesion()">Salir</button>
+</div>
+
+
+<div class="card">
+
+<h2>Buscar Producto</h2>
+
+<input id="buscar" type="text"
+placeholder="Buscar producto..."
+oninput="cargarProductos()">
+
+<div id="lista"></div>
+
+</div>
+
+<div class="card">
+
+<h2>🧾 Venta</h2>
+
+<p><b>Producto:</b></p>
+<p id="ventaProducto">Ninguno</p>
+
+<p><b>Precio:</b></p>
+<p id="ventaPrecio">$0</p>
+
+<p><b>Cantidad:</b></p>
+<input id="cantidadVenta" type="number" value="1">
+
+<p><b>Total:</b></p>
+<p id="ventaTotal">$0</p>
+
+<p><b>Cliente paga:</b></p>
+<input id="clientePaga" type="number">
+
+<p><b>Vuelto:</b></p>
+<p id="vuelto">$0</p>
+
+<button class="vender" onclick="confirmarVenta()">
+✅ Confirmar Venta
+</button>
+
+</div>
+
+<div class="card">
+
+<button onclick="cerrarSesion()">🚪 Cerrar sesión</button>
+
+</div>
+
+</div>
+
+<script src="cajera.js"></script>
+
+</body>
+</html>
