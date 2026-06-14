@@ -2,11 +2,11 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const jwt = require("jsonwebtoken");
-const db = require("./database");
+const db = require("./dbPostgres");
 
 const app = express();
 
-const SECRET = "clave_super_secreta_pos"; // 🔐 misma clave siempre
+const SECRET = "clave_super_secreta_pos";
 
 app.use(cors());
 app.use(express.json());
@@ -37,209 +37,198 @@ function verificarToken(req, res, next) {
 /* =========================
    LOGIN
 ========================= */
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
 
     const { usuario, password } = req.body;
 
-    db.get(
-        "SELECT * FROM usuarios WHERE usuario=? AND password=?",
-        [usuario, password],
-        (err, row) => {
+    try {
+        const result = await db.query(
+            "SELECT * FROM usuarios WHERE usuario=$1 AND password=$2",
+            [usuario, password]
+        );
 
-            if (err || !row) {
-                return res.json({ ok: false, mensaje: "Credenciales incorrectas" });
-            }
+        const row = result.rows[0];
 
-            const token = jwt.sign(
-                {
-                    id: row.id,
-                    usuario: row.usuario,
-                    rol: row.rol
-                },
-                SECRET,
-                { expiresIn: "8h" }
-            );
-
-            res.json({
-                ok: true,
-                token,
-                rol: row.rol
-            });
+        if (!row) {
+            return res.json({ ok: false, mensaje: "Credenciales incorrectas" });
         }
-    );
+
+        const token = jwt.sign(
+            {
+                id: row.id,
+                usuario: row.usuario,
+                rol: row.rol
+            },
+            SECRET,
+            { expiresIn: "8h" }
+        );
+
+        res.json({
+            ok: true,
+            token,
+            rol: row.rol
+        });
+
+    } catch (err) {
+        return res.json({ ok: false, mensaje: "Error login" });
+    }
 });
 
 /* =========================
    PRODUCTOS
 ========================= */
-app.get("/productos", verificarToken, (req, res) => {
-    db.all("SELECT * FROM productos", (err, rows) => {
-        res.json(rows || []);
-    });
+app.get("/productos", verificarToken, async (req, res) => {
+
+    const result = await db.query("SELECT * FROM productos");
+    res.json(result.rows);
 });
 
-app.post("/productos", verificarToken, (req, res) => {
+app.post("/productos", verificarToken, async (req, res) => {
 
     const { nombre, precio, stock } = req.body;
 
-    db.run(
-        "INSERT INTO productos(nombre,precio,stock) VALUES(?,?,?)",
-        [nombre, precio, stock],
-        function (err) {
-            if (err) return res.json({ ok: false });
-            res.json({ ok: true });
-        }
+    await db.query(
+        "INSERT INTO productos(nombre,precio,stock) VALUES($1,$2,$3)",
+        [nombre, precio, stock]
     );
+
+    res.json({ ok: true });
 });
 
-app.put("/productos/:id", verificarToken, (req, res) => {
+app.put("/productos/:id", verificarToken, async (req, res) => {
 
     const { nombre, precio, stock } = req.body;
 
-    db.run(
-        "UPDATE productos SET nombre=?, precio=?, stock=? WHERE id=?",
-        [nombre, precio, stock, req.params.id],
-        function (err) {
-            if (err) return res.json({ ok: false });
-            res.json({ ok: true });
-        }
+    await db.query(
+        "UPDATE productos SET nombre=$1, precio=$2, stock=$3 WHERE id=$4",
+        [nombre, precio, stock, req.params.id]
     );
+
+    res.json({ ok: true });
 });
 
-app.delete("/productos/:id", verificarToken, (req, res) => {
+app.delete("/productos/:id", verificarToken, async (req, res) => {
 
-    db.run(
-        "DELETE FROM productos WHERE id=?",
-        [req.params.id],
-        function (err) {
-            if (err) return res.json({ ok: false });
-            res.json({ ok: true });
-        }
+    await db.query(
+        "DELETE FROM productos WHERE id=$1",
+        [req.params.id]
     );
+
+    res.json({ ok: true });
 });
 
-app.put("/stock/:id", verificarToken, (req, res) => {
+app.put("/stock/:id", verificarToken, async (req, res) => {
 
     const { cantidad } = req.body;
 
-    db.run(
-        "UPDATE productos SET stock = stock + ? WHERE id=?",
-        [cantidad, req.params.id],
-        function (err) {
-            if (err) return res.json({ ok: false });
-            res.json({ ok: true });
-        }
+    await db.query(
+        "UPDATE productos SET stock = stock + $1 WHERE id=$2",
+        [cantidad, req.params.id]
     );
+
+    res.json({ ok: true });
 });
 
 /* =========================
    VENTAS
 ========================= */
-app.post("/ventas", verificarToken, (req, res) => {
+app.post("/ventas", verificarToken, async (req, res) => {
 
     const { id, cantidad, total } = req.body;
 
-    db.get(
-        "SELECT * FROM productos WHERE id=?",
-        [id],
-        (err, producto) => {
-
-            if (err || !producto) {
-                return res.json({ ok: false });
-            }
-
-            if (producto.stock < cantidad) {
-                return res.json({ ok: false, mensaje: "Stock insuficiente" });
-            }
-
-            db.run(
-                "UPDATE productos SET stock = stock - ? WHERE id=?",
-                [cantidad, id],
-                function () {
-
-                    db.run(
-                        `INSERT INTO ventas(producto,cantidad,total,fecha)
-                         VALUES(?,?,?,datetime('now','localtime'))`,
-                        [producto.nombre, cantidad, total],
-                        function () {
-                            res.json({ ok: true });
-                        }
-                    );
-
-                }
-            );
-
-        }
+    const productoResult = await db.query(
+        "SELECT * FROM productos WHERE id=$1",
+        [id]
     );
+
+    const producto = productoResult.rows[0];
+
+    if (!producto) {
+        return res.json({ ok: false });
+    }
+
+    if (producto.stock < cantidad) {
+        return res.json({ ok: false, mensaje: "Stock insuficiente" });
+    }
+
+    await db.query(
+        "UPDATE productos SET stock = stock - $1 WHERE id=$2",
+        [cantidad, id]
+    );
+
+    await db.query(
+        "INSERT INTO ventas(producto,cantidad,total,fecha) VALUES($1,$2,$3,now())",
+        [producto.nombre, cantidad, total]
+    );
+
+    res.json({ ok: true });
 });
 
 /* =========================
    VENTAS AGRUPADAS
 ========================= */
-app.get("/ventas", verificarToken, (req, res) => {
+app.get("/ventas", verificarToken, async (req, res) => {
 
-    db.all(`
+    const result = await db.query(`
         SELECT 
-            date(fecha) as dia,
+            id,
             producto,
             cantidad,
             total,
-            fecha
+            DATE(fecha) as dia
         FROM ventas
         ORDER BY fecha DESC
-    `, (err, rows) => {
+    `);
 
-        if (err) return res.json([]);
+    const rows = result.rows;
 
-        const agrupado = {};
+    const agrupado = {};
 
-        rows.forEach(v => {
+    rows.forEach(v => {
 
-            if (!agrupado[v.dia]) {
-                agrupado[v.dia] = {
-                    dia: v.dia,
-                    ventas: [],
-                    totalDia: 0
-                };
-            }
+        if (!agrupado[v.dia]) {
+            agrupado[v.dia] = {
+                dia: v.dia,
+                ventas: [],
+                totalDia: 0
+            };
+        }
 
-            agrupado[v.dia].ventas.push(v);
-            agrupado[v.dia].totalDia += v.total;
-        });
-
-        res.json(Object.values(agrupado));
+        agrupado[v.dia].ventas.push(v);
+        agrupado[v.dia].totalDia += Number(v.total);
     });
+
+    res.json(Object.values(agrupado));
 });
 
 /* =========================
    RESUMEN
 ========================= */
-app.get("/resumen", verificarToken, (req, res) => {
+app.get("/resumen", verificarToken, async (req, res) => {
 
-    db.get(
-        `SELECT COUNT(*) as ventas, IFNULL(SUM(total),0) as dinero FROM ventas`,
-        (err, row) => {
-            if (err) return res.json({ ventas: 0, dinero: 0 });
-            res.json(row);
-        }
-    );
+    const result = await db.query(`
+        SELECT 
+            COUNT(*) as ventas,
+            COALESCE(SUM(total),0) as dinero
+        FROM ventas
+    `);
+
+    res.json(result.rows[0]);
 });
 
 /* =========================
-   ESTADISTICAS
+   ESTADÍSTICAS
 ========================= */
-app.get("/estadisticas", verificarToken, (req, res) => {
+app.get("/estadisticas", verificarToken, async (req, res) => {
 
-    db.get(
-        `SELECT
-        IFNULL(SUM(CASE WHEN date(fecha)=date('now','localtime') THEN total END),0) as hoy,
-        IFNULL(SUM(CASE WHEN strftime('%Y-%m',fecha)=strftime('%Y-%m','now','localtime') THEN total END),0) as mes
-        FROM ventas`,
-        (err, row) => {
-            if (err) return res.json({ hoy: 0, mes: 0 });
-            res.json(row);
-        }
-    );
+    const result = await db.query(`
+        SELECT
+        COALESCE(SUM(CASE WHEN DATE(fecha)=CURRENT_DATE THEN total END),0) as hoy,
+        COALESCE(SUM(CASE WHEN TO_CHAR(fecha,'YYYY-MM') = TO_CHAR(NOW(),'YYYY-MM') THEN total END),0) as mes
+        FROM ventas
+    `);
+
+    res.json(result.rows[0]);
 });
 
 /* =========================
