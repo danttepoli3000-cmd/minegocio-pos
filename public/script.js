@@ -92,7 +92,14 @@ async function cargarProductos() {
 
     Precio: $${Number(p.precio).toLocaleString("es-CL")}<br>
 
-    Stock: ${p.stock}<br><br>
+   
+    ${
+    p.stock == 0
+        ? "<span style='color:red;font-weight:bold;'>🔴 SIN STOCK</span><br><br>"
+        : p.stock <= 2
+        ? "<span style='color:orange;font-weight:bold;'>⚠️ Stock bajo: " + p.stock + "</span><br><br>"
+        : "Stock: " + p.stock + "<br><br>"
+}
 
     <button onclick='venderProducto(${JSON.stringify(p)})'>
         💰 Vender
@@ -247,10 +254,10 @@ cargarEstadisticas();
 
 async function confirmarVenta() {
 
-    if (!productoSeleccionado) {
-        alert("Seleccione un producto");
-        return;
-    }
+   if (productoSeleccionado.stock <= 0) {
+    alert("❌ Este producto no tiene stock.");
+    return;
+}
 
     const cantidad = Number(document.getElementById("cantidadVenta").value);
     const paga = Number(document.getElementById("clientePaga").value);
