@@ -14,7 +14,9 @@ let productoSeleccionado = null;
 async function cargarProductos() {
 
     const res = await fetch("/productos", {
-        headers: authHeaders()
+        headers: {
+            "Authorization": "Bearer " + token
+        }
     });
 
     const productos = await res.json();
@@ -27,40 +29,27 @@ async function cargarProductos() {
         .filter(p => p.nombre.toLowerCase().includes(texto))
         .forEach(p => {
 
-           html += `
-<div class="producto">
+            html += `
+            <div class="producto">
 
-    <h3>${p.nombre}</h3>
+                <h3>${p.nombre}</h3>
 
-    Precio: $${Number(p.precio).toLocaleString("es-CL")}<br>
+                Precio: $${Number(p.precio).toLocaleString("es-CL")}<br>
 
-   
-    ${
-    p.stock == 0
-        ? "<span style='color:red;font-weight:bold;'>🔴 SIN STOCK</span><br><br>"
-        : p.stock <= 2
-        ? "<span style='color:orange;font-weight:bold;'>⚠️ Stock bajo: " + p.stock + "</span><br><br>"
-        : "Stock: " + p.stock + "<br><br>"
-}
+                ${
+                    p.stock == 0
+                    ? "<span style='color:red;font-weight:bold;'>🔴 SIN STOCK</span><br><br>"
+                    : p.stock <= 2
+                    ? "<span style='color:orange;font-weight:bold;'>⚠️ Stock bajo: " + p.stock + "</span><br><br>"
+                    : "Stock: " + p.stock + "<br><br>"
+                }
 
-    <button onclick='venderProducto(${JSON.stringify(p)})'>
-        💰 Vender
-    </button>
+                <button onclick='venderProducto(${JSON.stringify(p)})'>
+                    💰 Vender
+                </button>
 
-    <button onclick='editarProducto(${p.id}, "${p.nombre}", ${p.precio}, ${p.stock})'>
-        ✏️
-    </button>
-
-    <button onclick='agregarStock(${p.id})'>
-        ➕
-    </button>
-
-    <button onclick='eliminarProducto(${p.id})'>
-        🗑
-    </button>
-
-</div><br>
-`;
+            </div><br>
+            `;
         });
 
     document.getElementById("lista").innerHTML = html;
