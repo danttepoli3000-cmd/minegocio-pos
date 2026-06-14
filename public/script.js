@@ -349,6 +349,58 @@ async function editarProducto(id, nombreActual, precioActual, stockActual) {
         alert("Error al actualizar");
     }
 }
+
+function imprimirHistorial() {
+
+    const contenido =
+        document.getElementById("historial").innerHTML;
+
+    const ventana = window.open("", "_blank");
+
+    ventana.document.write(`
+        <html>
+
+        <head>
+
+        <title>Historial de Ventas</title>
+
+        <style>
+
+        body{
+            font-family:Arial;
+            padding:20px;
+        }
+
+        h1{
+            text-align:center;
+        }
+
+        </style>
+
+        </head>
+
+        <body>
+
+        <h1>📋 Historial de Ventas</h1>
+
+        ${contenido}
+
+        </body>
+
+        </html>
+    `);
+
+    ventana.document.close();
+
+    ventana.print();
+}
+
+
+
+
+
+
+
 function cerrarSesion() {
     localStorage.clear();
     window.location = "login.html";
