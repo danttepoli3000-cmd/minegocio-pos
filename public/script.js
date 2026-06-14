@@ -13,6 +13,9 @@ function venderProducto(producto) {
 
     document.getElementById("cantidadVenta").value = 1;
     document.getElementById("clientePaga").value = "";
+    document.getElementById("ventaTotal").innerText =
+        "$" + Number(producto.precio).toLocaleString("es-CL");
+    document.getElementById("vuelto").innerText = "$0";
 
     actualizarTotal();
 }
@@ -21,9 +24,11 @@ function actualizarTotal() {
 
     if (!productoSeleccionado) return;
 
-    const cantidad = Number(document.getElementById("cantidadVenta").value);
+    const cantidad =
+        Number(document.getElementById("cantidadVenta").value) || 1;
 
-    const total = cantidad * productoSeleccionado.precio;
+    const total =
+        cantidad * Number(productoSeleccionado.precio);
 
     document.getElementById("ventaTotal").innerText =
         "$" + total.toLocaleString("es-CL");
@@ -35,18 +40,23 @@ function calcularVuelto() {
 
     if (!productoSeleccionado) return;
 
-    const cantidad = Number(document.getElementById("cantidadVenta").value);
+    const cantidad =
+        Number(document.getElementById("cantidadVenta").value) || 0;
 
-    const paga = Number(document.getElementById("clientePaga").value);
+    const texto =
+        document.getElementById("clientePaga").value;
 
-    const total = cantidad * productoSeleccionado.precio;
+    if (texto === "") {
+        document.getElementById("vuelto").innerText = "$0";
+        return;
+    }
+
+    const paga = Number(texto);
+    const total = cantidad * Number(productoSeleccionado.precio);
+    const vuelto = paga - total;
 
     document.getElementById("vuelto").innerText =
-        "$" + (paga - total).toLocaleString("es-CL");
-}
-
-if (!token || rol !== "admin") {
-    window.location = "login.html";
+        "$" + vuelto.toLocaleString("es-CL");
 }
 
 function authHeaders(extra = {}) {
@@ -195,7 +205,11 @@ async function cargarEstadisticas() {
     ventasHoy.innerText = "$" + data.hoy.toLocaleString("es-CL");
     ventasMes.innerText = "$" + data.mes.toLocaleString("es-CL");
 }
+document.getElementById("cantidadVenta")
+.addEventListener("input", actualizarTotal);
 
+document.getElementById("clientePaga")
+.addEventListener("input", calcularVuelto);
 /* INIT */
 cargarProductos();
 cargarHistorial();
