@@ -1,5 +1,49 @@
 const token = localStorage.getItem("token");
 const rol = localStorage.getItem("rol");
+let productoSeleccionado = null;
+
+function venderProducto(producto) {
+
+    productoSeleccionado = producto;
+
+    document.getElementById("ventaProducto").innerText = producto.nombre;
+
+    document.getElementById("ventaPrecio").innerText =
+        "$" + Number(producto.precio).toLocaleString("es-CL");
+
+    document.getElementById("cantidadVenta").value = 1;
+    document.getElementById("clientePaga").value = "";
+
+    actualizarTotal();
+}
+
+function actualizarTotal() {
+
+    if (!productoSeleccionado) return;
+
+    const cantidad = Number(document.getElementById("cantidadVenta").value);
+
+    const total = cantidad * productoSeleccionado.precio;
+
+    document.getElementById("ventaTotal").innerText =
+        "$" + total.toLocaleString("es-CL");
+
+    calcularVuelto();
+}
+
+function calcularVuelto() {
+
+    if (!productoSeleccionado) return;
+
+    const cantidad = Number(document.getElementById("cantidadVenta").value);
+
+    const paga = Number(document.getElementById("clientePaga").value);
+
+    const total = cantidad * productoSeleccionado.precio;
+
+    document.getElementById("vuelto").innerText =
+        "$" + (paga - total).toLocaleString("es-CL");
+}
 
 if (!token || rol !== "admin") {
     window.location = "login.html";
@@ -40,6 +84,7 @@ async function cargarProductos() {
                 <button onclick='editarProducto(${p.id}, "${p.nombre}", ${p.precio}, ${p.stock})'>✏️</button>
                 <button onclick='agregarStock(${p.id})'>➕</button>
                 <button onclick='eliminarProducto(${p.id})'>🗑</button>
+                <button onclick='venderProducto(${JSON.stringify(p)})'>💰 Vender</button>
             </div><br>
             `;
         });
@@ -141,6 +186,72 @@ cargarProductos();
 cargarHistorial();
 cargarResumen();
 cargarEstadisticas();
+
+async function confirmarVenta() {
+
+    if (!productoSeleccionado) {
+        alert("Seleccione un producto");
+        return;
+    }
+
+    const cantidad = Number(document.getElementById("cantidadVenta").value);
+    const paga = Number(document.getElementById("clientePaga").value);
+
+    const total = cantidad * productoSeleccionado.precio;
+
+    if (cantidad <= 0) {
+        alert("Cantidad inválida");
+        return;
+    }
+
+    if (paga < total) {
+        alert("El cliente no paga suficiente");
+        return;
+    }
+
+    const res = await fetch("/ventas", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        },
+
+        body: JSON.stringify({
+            id: productoSeleccionado.id,
+            cantidad,
+            total
+        })
+
+    });
+
+    const data = await res.json();
+
+    if (data.ok) {
+
+        alert("✅ Venta realizada");
+
+        productoSeleccionado = null;
+
+        document.getElementById("ventaProducto").innerText = "Ninguno";
+        document.getElementById("ventaPrecio").innerText = "$0";
+        document.getElementById("ventaTotal").innerText = "$0";
+        document.getElementById("clientePaga").value = "";
+        document.getElementById("cantidadVenta").value = 1;
+        document.getElementById("vuelto").innerText = "$0";
+
+        cargarProductos();
+        cargarHistorial();
+        cargarResumen();
+        cargarEstadisticas();
+
+    } else {
+
+        alert(data.mensaje || "Error al vender");
+
+    }
+}
 
 function cerrarSesion() {
     localStorage.clear();
