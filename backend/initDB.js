@@ -29,7 +29,7 @@ async function init() {
                 fecha TIMESTAMP DEFAULT NOW()
             );
         `);
-                  await db.query(`
+await db.query(`
 ALTER TABLE ventas
 ADD COLUMN IF NOT EXISTS vendedor TEXT;
 `);

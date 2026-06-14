@@ -160,7 +160,7 @@ app.post("/ventas", verificarToken, async (req, res) => {
         [cantidad, id]
     );
 
-   await db.query(
+  await db.query(
     "INSERT INTO ventas(producto,cantidad,total,fecha,vendedor) VALUES($1,$2,$3,NOW(),$4)",
     [
         producto.nombre,
@@ -179,13 +179,13 @@ app.post("/ventas", verificarToken, async (req, res) => {
 app.get("/ventas", verificarToken, async (req, res) => {
 
     const result = await db.query(`
-        SELECT
-    id,
-    producto,
-    cantidad,
-    total,
-    vendedor,
-    DATE(fecha) as dia
+  SELECT
+id,
+producto,
+cantidad,
+total,
+vendedor,
+DATE(fecha) as dia
 FROM ventas
         ORDER BY fecha DESC
     `);

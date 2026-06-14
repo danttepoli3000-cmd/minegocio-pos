@@ -229,13 +229,19 @@ $${Number(v.total).toLocaleString("es-CL")}
 /* RESUMEN + ESTADISTICAS */
 async function cargarResumen() {
 
-    const res = await fetch("/resumen", { headers: authHeaders() });
+    const res = await fetch("/resumen", {
+        headers: authHeaders()
+    });
+
     const data = await res.json();
 
-    totalVentas.innerText = data.ventas;
-    dineroTotal.innerText = "$" + data.dinero.toLocaleString("es-CL");
-}
+    document.getElementById("totalVentas").innerText = data.ventas;
 
+    document.getElementById("totalVentasDashboard").innerText = data.ventas;
+
+    document.getElementById("dineroTotal").innerText =
+        "$" + Number(data.dinero).toLocaleString("es-CL");
+}
 async function cargarEstadisticas() {
 
     const res = await fetch("/estadisticas", { headers: authHeaders() });
