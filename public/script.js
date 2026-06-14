@@ -175,13 +175,42 @@ async function cargarHistorial() {
 
     data.forEach(d => {
 
-        html += `<div class="producto"><h3>${d.dia}</h3>`;
+        const fecha = new Date(d.dia);
+
+        const dia =
+            fecha.getDate().toString().padStart(2, "0") + "/" +
+            (fecha.getMonth() + 1).toString().padStart(2, "0") + "/" +
+            fecha.getFullYear();
+
+        html += `
+        <div class="producto">
+
+        <h3>📅 ${dia}</h3>
+        `;
+
+        let totalDia = 0;
 
         d.ventas.forEach(v => {
-            html += `${v.producto} x${v.cantidad} = $${v.total}<br>`;
+
+            totalDia += Number(v.total);
+
+            html += `
+            ${v.producto}
+            x${v.cantidad}
+            =
+            $${Number(v.total).toLocaleString("es-CL")}
+            <br>
+            `;
+
         });
 
-        html += `</div><br>`;
+        html += `
+        <hr>
+        <b>Total del día:
+        $${totalDia.toLocaleString("es-CL")}</b>
+
+        </div><br>
+        `;
     });
 
     document.getElementById("historial").innerHTML = html;
