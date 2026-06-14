@@ -161,9 +161,14 @@ app.post("/ventas", verificarToken, async (req, res) => {
     );
 
     await db.query(
-        "INSERT INTO ventas(producto,cantidad,total,fecha) VALUES($1,$2,$3,now())",
-        [producto.nombre, cantidad, total]
-    );
+    "INSERT INTO ventas(producto,cantidad,total,fecha,vendedor) VALUES($1,$2,$3,now(),$4)",
+    [
+        producto.nombre,
+        cantidad,
+        total,
+        req.user.usuario
+    ]
+);
 
     res.json({ ok: true });
 });
@@ -174,13 +179,14 @@ app.post("/ventas", verificarToken, async (req, res) => {
 app.get("/ventas", verificarToken, async (req, res) => {
 
     const result = await db.query(`
-        SELECT 
-            id,
-            producto,
-            cantidad,
-            total,
-            DATE(fecha) as dia
-        FROM ventas
+        SELECT
+    id,
+    producto,
+    cantidad,
+    total,
+    vendedor,
+    DATE(fecha) as dia
+FROM ventas
         ORDER BY fecha DESC
     `);
 

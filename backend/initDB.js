@@ -29,6 +29,10 @@ async function init() {
                 fecha TIMESTAMP DEFAULT NOW()
             );
         `);
+                  await db.query(`
+ALTER TABLE ventas
+ADD COLUMN IF NOT EXISTS vendedor TEXT;
+`);
 
 
         await db.query(`
@@ -37,7 +41,7 @@ async function init() {
         ON CONFLICT(usuario) DO NOTHING;
         `);
 
-        
+
        await db.query(`
        INSERT INTO usuarios(usuario,password,rol)
        VALUES('cajera','4321','cajera')

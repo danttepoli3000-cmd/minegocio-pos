@@ -202,12 +202,15 @@ async function cargarHistorial() {
             totalDia += Number(v.total);
 
             html += `
-            ${v.producto}
-            x${v.cantidad}
-            =
-            $${Number(v.total).toLocaleString("es-CL")}
-            <br>
-            `;
+👤 ${v.vendedor}<br>
+
+${v.producto}
+x${v.cantidad}
+=
+$${Number(v.total).toLocaleString("es-CL")}
+
+<br><br>
+`;
 
         });
 
