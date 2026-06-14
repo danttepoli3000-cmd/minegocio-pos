@@ -3,19 +3,17 @@
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "sqlite3": "^6.0.1"
+    "sqlite3": "^5.1.6"
   },
   "name": "minegociopos",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "devDependencies": {},
   "scripts": {
-  "start": "node backend/server.js"
-},
+    "start": "node backend/server.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs"
 }
-
