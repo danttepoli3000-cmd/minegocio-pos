@@ -4,122 +4,124 @@
 <meta charset="UTF-8">
 <title>Mi Tiendita POS</title>
 <link rel="stylesheet" href="style.css">
+
+<script>
+const token = localStorage.getItem("token");
+const rol = localStorage.getItem("rol");
+
+if (!token || rol !== "admin") {
+    window.location.href = "login.html";
+}
+</script>
+
 </head>
 
 <body>
 
 <div class="container">
 
+    <div class="topbar">
+        <h1>🛒 Mi Tiendita POS</h1>
+        <button class="logout" onclick="cerrarSesion()">Salir</button>
+    </div>
 
-<<div class="topbar">
-    <h1>🛒 Mi Tiendita POS</h1>
-    <button class="logout" onclick="cerrarSesion()">Salir</button>
-</div>
+    <!-- AGREGAR PRODUCTO -->
+    <div class="card">
+        <h2>Agregar Producto</h2>
 
+        <input id="nombre" placeholder="Nombre del producto">
+        <input id="precio" type="number" placeholder="Precio">
+        <input id="stock" type="number" placeholder="Stock">
 
-<div class="card">
-<h2>Agregar Producto</h2>
+        <button class="agregar" onclick="agregarProducto()">
+            ➕ Agregar Producto
+        </button>
+    </div>
 
-<input id="nombre" placeholder="Nombre del producto">
-<input id="precio" type="number" placeholder="Precio">
-<input id="stock" type="number" placeholder="Stock">
+    <!-- INVENTARIO -->
+    <div class="card">
+        <h2>📦 Inventario</h2>
 
-<button class="agregar" onclick="agregarProducto()">
-➕ Agregar Producto
-</button>
-</div>
+        <input id="buscar" type="text"
+            placeholder="🔍 Buscar producto..."
+            oninput="cargarProductos()">
 
-<div class="card">
-<h2>📦 Inventario</h2>
+        <div id="lista"></div>
+    </div>
 
-<input id="buscar" type="text"
-placeholder="🔍 Buscar producto..."
-oninput="cargarProductos()">
+    <!-- VENTA -->
+    <div class="card">
+        <h2>🧾 Venta Actual</h2>
 
-<div id="lista"></div>
-</div>
+        <p><b>Producto:</b></p>
+        <p id="ventaProducto">Ninguno</p>
 
-<div class="card">
-<h2>🧾 Venta Actual</h2>
+        <p><b>Precio:</b></p>
+        <p id="ventaPrecio">$0</p>
 
-<p><b>Producto:</b></p>
-<p id="ventaProducto">Ninguno</p>
+        <p><b>Cantidad:</b></p>
+        <input id="cantidadVenta" type="number" value="1">
 
-<p><b>Precio:</b></p>
-<p id="ventaPrecio">$0</p>
+        <p><b>Total:</b></p>
+        <p id="ventaTotal">$0</p>
 
-<p><b>Cantidad:</b></p>
-<input id="cantidadVenta" type="number" value="1">
+        <p><b>Cliente paga:</b></p>
+        <input id="clientePaga" type="number">
 
-<p><b>Total:</b></p>
-<p id="ventaTotal">$0</p>
+        <p><b>Vuelto:</b></p>
+        <p id="vuelto">$0</p>
 
-<p><b>Cliente paga:</b></p>
-<input id="clientePaga" type="number">
+        <button class="vender" onclick="confirmarVenta()">
+            ✅ Confirmar Venta
+        </button>
+    </div>
 
-<p><b>Vuelto:</b></p>
-<p id="vuelto">$0</p>
+    <!-- RESUMEN -->
+    <div class="card">
+        <h2>💰 Resumen</h2>
 
-<button class="vender" onclick="confirmarVenta()">
-✅ Confirmar Venta
-</button>
-</div>
+        <p>Ventas realizadas: <span id="totalVentas">0</span></p>
+        <p>Dinero vendido: <b id="dineroTotal">$0</b></p>
+    </div>
 
-<div class="card">
+    <!-- DASHBOARD -->
+    <div class="card">
+        <h2>📊 Dashboard</h2>
 
+        <div class="stats">
 
-<h2>💰 Resumen</h2>
+            <div class="stat-card">
+                <h3>Ventas Hoy</h3>
+                <p id="ventasHoy">$0</p>
+            </div>
 
-<p>Ventas realizadas: <span id="totalVentas">0</span></p>
-<p>Dinero vendido: <b id="dineroTotal">$0</b></p>
-</div>
+            <div class="stat-card">
+                <h3>Ventas Mes</h3>
+                <p id="ventasMes">$0</p>
+            </div>
 
-<div class="card">
-    <h2>📊 Dashboard</h2>
+            <div class="stat-card">
+                <h3>Total Ventas</h3>
+                <p id="totalVentasDashboard">0</p>
+            </div>
 
-    <div class="stats">
-
-        <div class="stat-card">
-            <h3>Ventas Hoy</h3>
-            <p id="ventasHoy">$0</p>
         </div>
+    </div>
 
-        <div class="stat-card">
-            <h3>Ventas Mes</h3>
-            <p id="ventasMes">$0</p>
-        </div>
+    <!-- HISTORIAL -->
+    <div class="card">
+        <h2>📋 Historial de Ventas</h2>
 
-        <div class="stat-card">
-            <h3>Total Ventas</h3>
-            <p id="totalVentasDashboard">0</p>
-        </div>
+        <div id="historial">Sin ventas</div>
 
-  <div class="card">
-
-<h2>📋 Historial de Ventas</h2>
-
-<div id="historial">Sin ventas</div>
-
-<button onclick="exportarPDF()">
-📄 Exportar Historial PDF
-</button>
-
-<br><br>
-
-<button onclick="imprimirHistorial()">
-🖨️ Imprimir Historial
-</button>
-
-<br><br>
-
-
+        <button onclick="exportarPDF()">📄 Exportar Historial PDF</button>
+        <button onclick="imprimirHistorial()">🖨️ Imprimir Historial</button>
+    </div>
 
 </div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 <script src="script.js"></script>
-
-
 
 </body>
 </html>
