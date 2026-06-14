@@ -402,9 +402,82 @@ function imprimirHistorial() {
 
 
 
+async function exportarPDF() {
 
+    const { jsPDF } = window.jspdf;
+
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("MI TIENDITA POS", 20, 20);
+
+    doc.setFontSize(12);
+    doc.text("Historial de Ventas", 20, 30);
+
+    let y = 45;
+
+    const historial =
+        document.getElementById("historial").innerText.split("\n");
+
+    historial.forEach(linea => {
+
+        if (linea.trim() !== "") {
+
+            doc.text(linea, 20, y);
+
+            y += 8;
+
+        }
+
+    });
+
+    doc.save("Historial_Ventas.pdf");
+
+}
 
 function cerrarSesion() {
     localStorage.clear();
     window.location = "login.html";
+}
+
+async function exportarPDF() {
+
+    const { jsPDF } = window.jspdf;
+
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("MI TIENDITA POS", 20, 20);
+
+    doc.setFontSize(12);
+
+    const fecha = new Date().toLocaleDateString("es-CL");
+
+    doc.text("Historial de Ventas", 20, 30);
+    doc.text("Fecha: " + fecha, 20, 38);
+
+    let y = 50;
+
+    const historial =
+        document.getElementById("historial").innerText.split("\n");
+
+    historial.forEach(linea => {
+
+        if (linea.trim() != "") {
+
+            doc.text(linea, 20, y);
+
+            y += 8;
+
+            if (y > 280) {
+                doc.addPage();
+                y = 20;
+            }
+
+        }
+
+    });
+
+    doc.save("Historial_" + fecha.replace(/\//g, "-") + ".pdf");
+
 }

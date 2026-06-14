@@ -98,19 +98,31 @@ oninput="cargarProductos()">
 
 <h2>📋 Historial de Ventas</h2>
 
+<div id="historial">Sin ventas</div>
+
+<button onclick="exportarPDF()">
+📄 Exportar Historial PDF
+</button>
+
+<br><br>
+
 <button onclick="imprimirHistorial()">
 🖨️ Imprimir Historial
 </button>
 
 <br><br>
 
-<div id="historial">
-Sin ventas
-</div>
+
 
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script src="script.js"></script>
 
+
+
+<button onclick="exportarPDF()">
+📄 Exportar PDF
+</button>
 </body>
 </html>
