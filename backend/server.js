@@ -5,34 +5,26 @@ const jwt = require("jsonwebtoken");
 const db = require("./dbPostgres");
 
 const app = express();
-
 const SECRET = "clave_super_secreta_pos";
 
 require("./initDB");
-console.log("initDB cargado");
 
+console.log("✅ initDB cargado");
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../public")));
 
-// SI ENTRAN A /
+/* =========================
+   LOGIN COMO PÁGINA PRINCIPAL
+========================= */
 app.get("/", (req, res) => {
-    res.redirect("/login.html");
+    res.sendFile(path.join(__dirname, "public/login.html"));
 });
-
-// PROTEGER admin.html
-app.get("/admin.html", (req, res) => {
-    res.sendFile(path.join(__dirname, "../public/admin.html"));
-});
-
-// PROTEGER cajera.html
-app.get("/cajera.html", (req, res) => {
-    res.sendFile(path.join(__dirname, "../public/cajera.html"));
-});
-
-
-
+app.use(express.static("public"));
+/* =========================
+   MIDDLEWARE TOKEN
+========================= */
 function verificarToken(req, res, next) {
 
     const header = req.headers.authorization;
@@ -48,7 +40,7 @@ function verificarToken(req, res, next) {
         req.user = decoded;
         next();
     } catch (err) {
-        return res.json({ ok: false, mensaje: "Token inválido o expirado" });
+        return res.json({ ok: false, mensaje: "Token inválido" });
     }
 }
 
@@ -60,22 +52,23 @@ app.post("/login", async (req, res) => {
     const { usuario, password } = req.body;
 
     try {
+
         const result = await db.query(
             "SELECT * FROM usuarios WHERE usuario=$1 AND password=$2",
             [usuario, password]
         );
 
-        const row = result.rows[0];
+        const user = result.rows[0];
 
-        if (!row) {
+        if (!user) {
             return res.json({ ok: false, mensaje: "Credenciales incorrectas" });
         }
 
         const token = jwt.sign(
             {
-                id: row.id,
-                usuario: row.usuario,
-                rol: row.rol
+                id: user.id,
+                usuario: user.usuario,
+                rol: user.rol
             },
             SECRET,
             { expiresIn: "8h" }
@@ -84,11 +77,11 @@ app.post("/login", async (req, res) => {
         res.json({
             ok: true,
             token,
-            rol: row.rol
+            rol: user.rol
         });
 
     } catch (err) {
-        return res.json({ ok: false, mensaje: "Error login" });
+        res.json({ ok: false, mensaje: "Error login" });
     }
 });
 
@@ -99,6 +92,7 @@ app.get("/productos", verificarToken, async (req, res) => {
 
     const result = await db.query("SELECT * FROM productos");
     res.json(result.rows);
+
 });
 
 app.post("/productos", verificarToken, async (req, res) => {
@@ -111,6 +105,7 @@ app.post("/productos", verificarToken, async (req, res) => {
     );
 
     res.json({ ok: true });
+
 });
 
 app.put("/productos/:id", verificarToken, async (req, res) => {
@@ -123,6 +118,7 @@ app.put("/productos/:id", verificarToken, async (req, res) => {
     );
 
     res.json({ ok: true });
+
 });
 
 app.delete("/productos/:id", verificarToken, async (req, res) => {
@@ -133,8 +129,12 @@ app.delete("/productos/:id", verificarToken, async (req, res) => {
     );
 
     res.json({ ok: true });
+
 });
 
+/* =========================
+   STOCK
+========================= */
 app.put("/stock/:id", verificarToken, async (req, res) => {
 
     const { cantidad } = req.body;
@@ -145,6 +145,7 @@ app.put("/stock/:id", verificarToken, async (req, res) => {
     );
 
     res.json({ ok: true });
+
 });
 
 /* =========================
@@ -174,35 +175,27 @@ app.post("/ventas", verificarToken, async (req, res) => {
         [cantidad, id]
     );
 
-  await db.query(
-    "INSERT INTO ventas(producto,cantidad,total,fecha,vendedor) VALUES($1,$2,$3,NOW(),$4)",
-    [
-        producto.nombre,
-        cantidad,
-        total,
-        req.user.usuario
-    ]
-);
+    await db.query(
+        `INSERT INTO ventas(producto,cantidad,total,fecha,vendedor)
+         VALUES($1,$2,$3,NOW(),$4)`,
+        [producto.nombre, cantidad, total, req.user.usuario]
+    );
 
     res.json({ ok: true });
+
 });
 
 /* =========================
-   VENTAS AGRUPADAS
+   VENTAS AGRUPADAS (CORREGIDO)
 ========================= */
 app.get("/ventas", verificarToken, async (req, res) => {
 
     const result = await db.query(`
-  SELECT
-id,
-producto,
-cantidad,
-total,
-vendedor,
-TO_CHAR(fecha,'HH24:MI') as hora,
-DATE(fecha) as dia
-FROM ventas
-ORDER BY fecha DESC
+        SELECT id, producto, cantidad, total, vendedor,
+        TO_CHAR(fecha,'HH24:MI') as hora,
+        DATE(fecha) as dia
+        FROM ventas
+        ORDER BY fecha DESC
     `);
 
     const rows = result.rows;
@@ -232,13 +225,13 @@ ORDER BY fecha DESC
 app.get("/resumen", verificarToken, async (req, res) => {
 
     const result = await db.query(`
-        SELECT 
-            COUNT(*) as ventas,
-            COALESCE(SUM(total),0) as dinero
+        SELECT COUNT(*) as ventas,
+        COALESCE(SUM(total),0) as dinero
         FROM ventas
     `);
 
     res.json(result.rows[0]);
+
 });
 
 /* =========================
@@ -249,18 +242,19 @@ app.get("/estadisticas", verificarToken, async (req, res) => {
     const result = await db.query(`
         SELECT
         COALESCE(SUM(CASE WHEN DATE(fecha)=CURRENT_DATE THEN total END),0) as hoy,
-        COALESCE(SUM(CASE WHEN TO_CHAR(fecha,'YYYY-MM') = TO_CHAR(NOW(),'YYYY-MM') THEN total END),0) as mes
+        COALESCE(SUM(CASE WHEN TO_CHAR(fecha,'YYYY-MM')=TO_CHAR(NOW(),'YYYY-MM') THEN total END),0) as mes
         FROM ventas
     `);
 
     res.json(result.rows[0]);
+
 });
 
 /* =========================
-   START
+   START SERVER
 ========================= */
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-    console.log("Servidor iniciado en puerto " + PORT);
+    console.log("🚀 Servidor corriendo en puerto " + PORT);
 });

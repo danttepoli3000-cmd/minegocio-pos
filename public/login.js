@@ -12,19 +12,16 @@ async function login() {
     const data = await res.json();
 
     if (!data.ok) {
-        alert("Usuario o contraseña incorrectos");
+        alert("Error login");
         return;
     }
 
-    // guardar sesión
     localStorage.setItem("token", data.token);
     localStorage.setItem("rol", data.rol);
 
-    
-if (data.rol === "admin") {
-    window.location.href = "admin.html";
-}
-
-if (data.rol === "cajera") {
-    window.location.href = "cajera.html";
+    if (data.rol === "admin") {
+        window.location = "admin.html";
+    } else {
+        window.location = "cajera.html";
+    }
 }

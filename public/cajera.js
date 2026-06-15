@@ -1,6 +1,20 @@
 const rol = localStorage.getItem("rol");
 const token = localStorage.getItem("token");
 
+
+if (!token) {
+    window.location = "login.html";
+}
+
+if (location.pathname.includes("admin") && rol !== "admin") {
+    window.location = "login.html";
+}
+
+if (location.pathname.includes("cajera") && rol !== "cajera") {
+    window.location = "login.html";
+}
+
+
 if (rol !== "cajera" || !token) {
     window.location = "login.html";
 }

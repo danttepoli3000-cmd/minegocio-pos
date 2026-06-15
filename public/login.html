@@ -2,19 +2,55 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Mi Tiendita POS</title>
+<title>Mi Tiendita</title>
+<link rel="stylesheet" href="style.css">
+
+<script src="auth.js"></script>
 </head>
 
 <body>
 
-<h2>Login</h2>
+<div class="container">
 
-<input id="usuario" placeholder="Usuario">
-<input id="password" type="password" placeholder="Password">
+<div class="topbar">
+    <h1>🛒 Mi Tiendita</h1>
+    <button onclick="cerrarSesion()">Salir</button>
+</div>
 
-<button onclick="login()">Entrar</button>
+<div class="card">
+    <h2>Agregar Producto</h2>
 
-<script src="login.js"></script>
+    <input id="nombre" placeholder="Nombre">
+    <input id="precio" type="number" placeholder="Precio">
+    <input id="stock" type="number" placeholder="Stock">
+
+    <button onclick="agregarProducto()">Agregar</button>
+</div>
+
+<div class="card">
+    <h2>Inventario</h2>
+    <input id="buscar" oninput="cargarProductos()" placeholder="Buscar">
+    <div id="lista"></div>
+</div>
+
+<div class="card">
+    <h2>Venta</h2>
+
+    <p id="ventaProducto">Ninguno</p>
+    <p id="ventaPrecio">$0</p>
+
+    <input id="cantidadVenta" type="number" value="1">
+    <input id="clientePaga" type="number">
+
+    <p>Total: <span id="ventaTotal">$0</span></p>
+    <p>Vuelto: <span id="vuelto">$0</span></p>
+
+    <button onclick="confirmarVenta()">Vender</button>
+</div>
+
+</div>
+
+<script src="script.js"></script>
 
 </body>
 </html>
